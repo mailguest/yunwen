@@ -1,0 +1,43 @@
+# 智能定时任务控制平台 - UV环境配置
+
+# Python版本
+python-version = "3.11"
+
+# 依赖源
+index-url = "https://pypi.org/simple"
+trusted-host = ["pypi.org", "pypi.python.org", "files.pythonhosted.org"]
+
+# 缓存目录
+cache-dir = ".uv-cache"
+
+# 超时设置
+timeout = 30
+
+# 重试次数
+retries = 3
+
+# 并发下载数
+concurrent-downloads = 4
+
+# 环境变量
+[env]
+PYTHONPATH = "scheduler-backend"
+PYTHONUNBUFFERED = "1"
+PYTHONDONTWRITEBYTECODE = "1"
+
+# 开发环境配置
+[dev]
+install-types = true
+non-interactive = true
+
+# 构建配置
+[build]
+no-binary = []
+only-binary = []
+prefer-binary = false
+
+# 工具配置
+[tool]
+black = { line-length = 88, target-version = ["py311"] }
+isort = { profile = "black", line-length = 88 }
+mypy = { python-version = "3.11", strict = true }
