@@ -335,9 +335,8 @@ cp -r scheduler-backend/logs logs_backup
 
 ## 📞 联系方式
 
-- 项目维护者: [Your Name]
-- 邮箱: [your.email@example.com]
-- 项目主页: [https://github.com/yourusername/intelligent-task-scheduler](https://github.com/yourusername/intelligent-task-scheduler)
+- 项目维护者: [pangdahai]
+- 邮箱: [278912990@qq.com]
 
 ---
 
