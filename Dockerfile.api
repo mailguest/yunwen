@@ -1,0 +1,19 @@
+# Node.js API Dockerfile
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Copy API source
+COPY api/ ./api/
+COPY .env.example ./.env.example
+
+EXPOSE 3001
+
+# Start API (using tsx to run TypeScript directly)
+CMD ["node", "node_modules/tsx/dist/cli.js", "api/server.ts"]
+

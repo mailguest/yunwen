@@ -1,8 +1,0 @@
-[run]
-source = app
-branch = True
-
-[report]
-omit =
-    main.py
-    **/__init__.py

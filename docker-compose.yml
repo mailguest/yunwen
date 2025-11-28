@@ -43,36 +43,25 @@ services:
       - scheduler-network
     restart: unless-stopped
 
-  # Python后端服务
-  backend:
+  # Node.js 后端 API 服务
+  api:
     build:
-      context: ./scheduler-backend
-      dockerfile: Dockerfile
-    container_name: scheduler-backend
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: scheduler-api
     environment:
+      - NODE_ENV=production
+      - PORT=3001
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
-      - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=${DEBUG}
-      - HOST=0.0.0.0
-      - PORT=8000
-    volumes:
-      - ./scheduler-backend/logs:/app/logs
-      - ./scheduler-backend/uploads:/app/uploads
     ports:
-      - "8000:8000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+      - "3001:3001"
     depends_on:
       - postgres
       - redis
     networks:
       - scheduler-network
     restart: unless-stopped
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
 
   # Node.js前端服务
   frontend:
@@ -81,7 +70,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: scheduler-frontend
     environment:
-      - VITE_API_BASE_URL=http://backend:8000/api/v1
+      - VITE_API_BASE_URL=/api
     ports:
       - "3000:80"
     healthcheck:
@@ -112,7 +101,7 @@ services:
       retries: 3
     depends_on:
       - frontend
-      - backend
+      - api
     networks:
       - scheduler-network
     restart: unless-stopped
