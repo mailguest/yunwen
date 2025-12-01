@@ -8,14 +8,15 @@ class ApiClient {
   public client: AxiosInstance;
 
   constructor() {
+    const envBase = (import.meta.env.VITE_API_BASE_URL || '').trim();
+    const isAbs = /^https?:\/\//i.test(envBase);
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+      baseURL: isAbs ? envBase : '',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       },
     });
-
     this.setupInterceptors();
   }
 
@@ -118,35 +119,42 @@ class ApiClient {
     throw lastErr
   }
 
+  private normalizeUrl(u: string): string {
+    if (/^https?:\/\//i.test(u)) return u;
+    if (u.startsWith('/api/')) return u;
+    if (u.startsWith('/')) return `/api${u}`;
+    return u;
+  }
+
   // GET请求
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return this.requestWithRetry(async () => {
-      const response = await this.client.get<T>(url, config)
+      const response = await this.client.get<T>(this.normalizeUrl(url), config)
       return response.data
     })
   }
 
   // POST请求
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(url, data, config);
+    const response = await this.client.post<T>(this.normalizeUrl(url), data, config);
     return response.data;
   }
 
   // PUT请求
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.put<T>(url, data, config);
+    const response = await this.client.put<T>(this.normalizeUrl(url), data, config);
     return response.data;
   }
 
   // DELETE请求
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
+    const response = await this.client.delete<T>(this.normalizeUrl(url), config);
     return response.data;
   }
 
   // PATCH请求
   async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.patch<T>(url, data, config);
+    const response = await this.client.patch<T>(this.normalizeUrl(url), data, config);
     return response.data;
   }
 

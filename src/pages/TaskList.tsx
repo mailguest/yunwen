@@ -1,5 +1,5 @@
 // 任务管理主页面
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, Table, Button, Space, Tag, Switch, Modal, Input, Select, App as AntApp } from 'antd';
 import dayjs from 'dayjs';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined, EyeOutlined } from '@ant-design/icons';
@@ -97,11 +97,30 @@ const TaskList: React.FC = () => {
     }
   };
 
-  const openExecutions = async (task: Task) => {
+  const fetchDebounceRef = useRef<number | null>(null);
+
+  const scheduleFetchExecutions = (
+    taskId: number,
+    page: number,
+    limit: number,
+    status?: string,
+    start?: string,
+    end?: string,
+    delay = 300,
+  ) => {
+    if (fetchDebounceRef.current) {
+      window.clearTimeout(fetchDebounceRef.current);
+    }
+    fetchDebounceRef.current = window.setTimeout(() => {
+      fetchExecutions(taskId, page, limit, status, start, end);
+    }, delay);
+  };
+
+  const openExecutions = (task: Task) => {
     setSelectedTask(task);
     setExecPage(1);
-    await fetchExecutions(Number(task.id), 1, execLimit, execStatus, execStart, execEnd);
     setExecModalVisible(true);
+    scheduleFetchExecutions(Number(task.id), 1, execLimit, execStatus, execStart, execEnd, 0);
   };
 
   const fetchExecutions = async (
@@ -318,6 +337,8 @@ const TaskList: React.FC = () => {
         onCancel={() => setExecModalVisible(false)}
         footer={null}
         width={900}
+        destroyOnClose
+        bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
       >
         <div className="flex gap-3 mb-3">
           <Select
@@ -325,7 +346,7 @@ const TaskList: React.FC = () => {
             allowClear
             style={{ width: 140 }}
             value={execStatus}
-            onChange={(v) => { setExecStatus(v); if (selectedTask) fetchExecutions(Number(selectedTask.id), 1, execLimit, v, execStart, execEnd); }}
+            onChange={(v) => { setExecStatus(v); if (selectedTask) scheduleFetchExecutions(Number(selectedTask.id), 1, execLimit, v, execStart, execEnd); }}
           >
             <Option value="success">成功</Option>
             <Option value="failed">失败</Option>
@@ -337,12 +358,12 @@ const TaskList: React.FC = () => {
           <Input
             type="datetime-local"
             value={execStart ? dayjs(execStart).format('YYYY-MM-DDTHH:mm') : ''}
-            onChange={(e) => { const v = e.target.value ? dayjs(e.target.value).toISOString() : undefined; setExecStart(v); if (selectedTask) fetchExecutions(Number(selectedTask.id), 1, execLimit, execStatus, v, execEnd); }}
+            onChange={(e) => { const v = e.target.value ? dayjs(e.target.value).toISOString() : undefined; setExecStart(v); if (selectedTask) scheduleFetchExecutions(Number(selectedTask.id), 1, execLimit, execStatus, v, execEnd); }}
           />
           <Input
             type="datetime-local"
             value={execEnd ? dayjs(execEnd).format('YYYY-MM-DDTHH:mm') : ''}
-            onChange={(e) => { const v = e.target.value ? dayjs(e.target.value).toISOString() : undefined; setExecEnd(v); if (selectedTask) fetchExecutions(Number(selectedTask.id), 1, execLimit, execStatus, execStart, v); }}
+            onChange={(e) => { const v = e.target.value ? dayjs(e.target.value).toISOString() : undefined; setExecEnd(v); if (selectedTask) scheduleFetchExecutions(Number(selectedTask.id), 1, execLimit, execStatus, execStart, v); }}
           />
         </div>
         <div style={{ overflowX: 'auto' }}>
@@ -350,14 +371,14 @@ const TaskList: React.FC = () => {
             dataSource={execItems}
             loading={execLoading}
             rowKey="id"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 'max-content', y: 420 }}
             pagination={{
               current: execPage,
               pageSize: execLimit,
               total: execTotal,
               showSizeChanger: true,
               showQuickJumper: true,
-              onChange: (p, ps) => { setExecLimit(ps); if (selectedTask) fetchExecutions(Number(selectedTask.id), p, ps, execStatus, execStart, execEnd); }
+              onChange: (p, ps) => { setExecLimit(ps); if (selectedTask) scheduleFetchExecutions(Number(selectedTask.id), p, ps, execStatus, execStart, execEnd); }
             }}
             columns={[
               { title: '状态', dataIndex: 'status', key: 'status', width: 100, render: (s: string) => <Tag color={s === 'success' ? 'green' : s === 'failed' ? 'red' : s === 'running' ? 'blue' : s === 'skipped' ? 'orange' : 'default'}>{s}</Tag> },
